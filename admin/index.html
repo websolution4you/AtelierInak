@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prihlásenie | Administrácia Ateliér INAK</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.min.css">
+    <style>
+        body { 
+            background: #15222b; 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            font-family: 'Roboto', sans-serif;
+        }
+        .login-card { 
+            background: #202e3a; 
+            padding: 2.5rem; 
+            border-radius: 12px; 
+            width: 100%; 
+            max-width: 420px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .login-card h3 {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 1.8rem;
+        }
+        .form-input { 
+            background: #15222b; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: white; 
+            width: 100%; 
+            padding: 12px 15px; 
+            margin-bottom: 20px; 
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #e67e22;
+            box-shadow: 0 0 8px rgba(230, 126, 34, 0.4);
+        }
+        .button-primary { 
+            width: 100%; 
+            background: #e67e22; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-size: 1rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .button-primary:hover {
+            background: #d35400;
+        }
+        .button-primary:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+        }
+        .error-msg { 
+            color: #ff6b6b; 
+            font-size: 0.9rem; 
+            margin-top: 15px; 
+            display: none; 
+        }
+        .logo-wrap {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-wrap img {
+            max-height: 70px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo-wrap">
+            <img src="../images/logo_biele.jpg" alt="Ateliér INAK">
+        </div>
+        <h3 class="text-center">Administrácia</h3>
+        <form id="login-form">
+            <input type="email" id="email" class="form-input" placeholder="E-mailová adresa" required>
+            <input type="password" id="password" class="form-input" placeholder="Heslo" required>
+            <button type="submit" class="button-primary" id="login-btn">Prihlásiť sa</button>
+            <div id="error-msg" class="error-msg text-center"></div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { auth } from '../js/gcp-client.js';
+        import { signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        
+        const form = document.getElementById('login-form');
+        const errorMsg = document.getElementById('error-msg');
+
+        // Ak už je admin prihlásený, presmerujeme ho na hlavný web
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = '../index.html';
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('login-btn');
+
+            btn.disabled = true;
+            btn.innerText = 'Prihlasujem...';
+            errorMsg.style.display = 'none';
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // Po úspešnom prihlásení onAuthStateChanged zachytí zmenu a presmeruje
+            } catch (error) {
+                errorMsg.innerText = 'Nesprávne prihlasovacie údaje: ' + error.code;
+                errorMsg.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'Prihlásiť sa';
+            }
+        });
+    </script>
+</body>
+</html>
