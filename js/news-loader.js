@@ -1,5 +1,5 @@
 import { auth, API_BASE } from './gcp-client.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
 (function () {
   // TODO: Po vytvorení GCS bucketu nahraďte 'YOUR_GCS_BUCKET_NAME' názvom vášho bucketu
@@ -58,6 +58,7 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/f
             <h4 style="margin: 0; color: #e67e22; font-family: 'Raleway', sans-serif; font-weight: 700; min-width: 200px;">Administrácia Noviniek</h4>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button id="admin-news-save-all-btn" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: bold; white-space: nowrap;">Uložiť zmeny</button>
+                <button id="admin-news-logout-btn" style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #666; white-space: nowrap;">Odhlásiť sa</button>
             </div>
         </div>
         
@@ -97,6 +98,13 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/f
             uploadBtn.style.display = 'none';
         }
     }
+
+    document.getElementById('admin-news-logout-btn').onclick = async () => {
+        if(confirm('Naozaj sa chcete odhlásiť?')) {
+            await signOut(auth);
+            location.reload();
+        }
+    };
 
     document.getElementById('admin-news-save-all-btn').onclick = async () => {
         const btn = document.getElementById('admin-news-save-all-btn');
