@@ -940,9 +940,9 @@ section,
   color: var(--heading-color);
   margin: 0;
   font-size: 36px;
-  font-weight: 800;
+  font-weight: 300;
   text-transform: uppercase;
-  font-family: var(--heading-font);
+  font-family: "Poppins", sans-serif;
 }
 
 @media (max-width: 768px) {
