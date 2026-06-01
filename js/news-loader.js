@@ -80,8 +80,41 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         item.title = e.target.value;
       } else if (e.target.classList.contains('admin-news-desc-edit')) {
         item.description = e.target.value;
-      } else if (e.target.classList.contains('admin-news-sort-edit')) {
-        item.requested_sort = parseFloat(e.target.value) || 999;
+      }
+    });
+
+    // Commit sort order and swap on change (blur or Enter)
+    container.addEventListener('change', (e) => {
+      if (e.target.classList.contains('admin-news-sort-edit')) {
+        const itemEl = e.target.closest('.news-item-wrap');
+        if (!itemEl) return;
+        const id = itemEl.dataset.id;
+        const newSort = parseFloat(e.target.value) || 999;
+        
+        const item = newsList.find(n => n.id == id);
+        if (!item) return;
+        
+        const oldSort = item.requested_sort;
+        if (oldSort === newSort) return;
+
+        // Find if another item has newSort
+        const otherItem = newsList.find(n => n.id != id && n.requested_sort === newSort);
+        if (otherItem) {
+          otherItem.requested_sort = oldSort;
+        }
+        item.requested_sort = newSort;
+
+        // Sort and re-render
+        newsList.sort((a, b) => a.requested_sort - b.requested_sort);
+        renderNews();
+      }
+    });
+
+    // Blur on Enter keypress to trigger change event
+    container.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.classList.contains('admin-news-sort-edit')) {
+        e.preventDefault();
+        e.target.blur();
       }
     });
   }

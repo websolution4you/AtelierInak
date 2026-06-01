@@ -67,18 +67,51 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
   }
 
   function setupInputListeners() {
-    // Keep internal galleryList up-to-date when admin inputs changes
+    // Keep internal galleryList Alt text up-to-date when admin types
     container.addEventListener('input', (e) => {
-      const itemEl = e.target.closest('.gallery-item-wrap');
-      if (!itemEl) return;
-      const id = itemEl.dataset.id;
-      const item = galleryList.find(p => p.id == id);
-      if (!item) return;
-
       if (e.target.classList.contains('admin-alt-edit')) {
-        item.alt_text = e.target.value;
-      } else if (e.target.classList.contains('admin-sort-edit')) {
-        item.requested_sort = parseFloat(e.target.value) || 999;
+        const itemEl = e.target.closest('.gallery-item-wrap');
+        if (!itemEl) return;
+        const id = itemEl.dataset.id;
+        const item = galleryList.find(p => p.id == id);
+        if (item) {
+          item.alt_text = e.target.value;
+        }
+      }
+    });
+
+    // Commit sort order and swap on change (blur or Enter)
+    container.addEventListener('change', (e) => {
+      if (e.target.classList.contains('admin-sort-edit')) {
+        const itemEl = e.target.closest('.gallery-item-wrap');
+        if (!itemEl) return;
+        const id = itemEl.dataset.id;
+        const newSort = parseFloat(e.target.value) || 999;
+        
+        const item = galleryList.find(p => p.id == id);
+        if (!item) return;
+        
+        const oldSort = item.requested_sort;
+        if (oldSort === newSort) return;
+
+        // Find if another item has newSort
+        const otherItem = galleryList.find(p => p.id != id && p.requested_sort === newSort);
+        if (otherItem) {
+          otherItem.requested_sort = oldSort;
+        }
+        item.requested_sort = newSort;
+
+        // Sort and re-render
+        galleryList.sort((a, b) => a.requested_sort - b.requested_sort);
+        renderGallery();
+      }
+    });
+
+    // Blur on Enter keypress to trigger change event
+    container.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.classList.contains('admin-sort-edit')) {
+        e.preventDefault();
+        e.target.blur();
       }
     });
   }
