@@ -1079,6 +1079,11 @@ section,
 }
 
 @media (max-width: 768px) {
+  .hero {
+    align-items: flex-start;
+    padding-top: calc(80px + 6vh);
+  }
+
   .hero h2 {
     font-size: 30px;
     line-height: 1.4;
@@ -1094,6 +1099,11 @@ section,
 
   .hero p {
     font-size: 18px;
+    margin-top: 30px;
+  }
+
+  .hero .hero-btns {
+    margin-top: 15px !important;
   }
 
   .hero .btn-watch-video {
@@ -1102,12 +1112,17 @@ section,
 }
 
 @media (max-width: 480px) {
+  .hero {
+    padding-top: calc(80px + 4vh);
+  }
+
   .hero h2 {
     font-size: 22px;
   }
 
   .hero p {
     font-size: 16px;
+    margin-top: 25px;
   }
 }
 
