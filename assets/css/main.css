@@ -760,6 +760,20 @@ h6 {
   font-size: 13px;
 }
 
+@media (max-width: 767px) {
+  .footer .footer-about,
+  .footer .footer-links {
+    text-align: center;
+  }
+
+  .footer .footer-about .logo,
+  .footer .footer-about .d-flex,
+  .footer .social-links,
+  .footer .footer-links ul li {
+    justify-content: center !important;
+  }
+}
+
 /*--------------------------------------------------------------
 # Preloader
 --------------------------------------------------------------*/
