@@ -476,18 +476,13 @@ h6 {
   }
 
   .navmenu {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0);
-    visibility: hidden;
-    transition: background-color 0.5s ease, visibility 0.5s ease;
+    padding: 0;
     z-index: 9997;
-    pointer-events: none;
   }
 
   .navmenu ul {
     list-style: none;
-    position: absolute;
+    position: fixed;
     inset: 0 auto 0 0;
     width: 290px;
     max-width: 85%;
@@ -589,9 +584,12 @@ h6 {
   }
 
   .mobile-nav-active .navmenu {
+    position: fixed;
+    inset: 0;
     background: rgba(10, 18, 25, 0.6);
-    visibility: visible;
-    pointer-events: auto;
+    transition: background-color 0.5s ease;
+    z-index: 9997;
+    overflow: hidden;
   }
 
   .mobile-nav-active .navmenu>ul {
@@ -1091,12 +1089,15 @@ section,
 @media (max-width: 768px) {
   .hero {
     align-items: flex-start;
-    padding-top: calc(80px + 6vh);
+    padding-top: calc(70px + 8vh);
   }
 
   .hero h2 {
-    font-size: 30px;
-    line-height: 1.4;
+    font-size: 28px;
+    line-height: 1.35;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 35px;
   }
 
   .hero h2 .hero-word {
@@ -1109,11 +1110,16 @@ section,
 
   .hero p {
     font-size: 18px;
-    margin-top: 30px;
+    text-align: center;
+    width: 100%;
+    margin-top: 0;
+    margin-bottom: 25px;
   }
 
   .hero .hero-btns {
-    margin-top: 15px !important;
+    margin-top: 0 !important;
+    width: 100%;
+    justify-content: center;
   }
 
   .hero .btn-watch-video {
@@ -1123,16 +1129,18 @@ section,
 
 @media (max-width: 480px) {
   .hero {
-    padding-top: calc(80px + 4vh);
+    padding-top: calc(70px + 6vh);
   }
 
   .hero h2 {
     font-size: 22px;
+    margin-bottom: 25px;
   }
 
   .hero p {
     font-size: 16px;
-    margin-top: 25px;
+    margin-top: 0;
+    margin-bottom: 20px;
   }
 }
 
