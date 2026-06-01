@@ -302,6 +302,22 @@ h6 {
   }
 }
 
+@media (max-width: 768px) {
+  .header .cta-btn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header .logo h1 {
+    font-size: 18px;
+  }
+  .header .logo img {
+    max-height: 36px;
+    margin-right: 8px;
+  }
+}
+
 .scrolled .header {
   box-shadow: 0px 0 18px rgba(0, 0, 0, 0.1);
 }
@@ -1058,11 +1074,25 @@ section,
 
 @media (max-width: 768px) {
   .hero h2 {
-    font-size: 32px;
+    font-size: 30px;
   }
 
   .hero p {
     font-size: 18px;
+  }
+
+  .hero .btn-watch-video {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h2 {
+    font-size: 22px;
+  }
+
+  .hero p {
+    font-size: 16px;
   }
 }
 
