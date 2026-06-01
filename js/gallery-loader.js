@@ -69,11 +69,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
                   <label for="admin-file-input" style="background: #e67e22; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: .2s;">+ Zvoliť fotky</label>
                   <input type="file" id="admin-file-input" accept="image/*" multiple style="display:none;">
               </div>
-              <select id="admin-category-input" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
-                  <option value="hlina">Hlina</option>
-                  <option value="grafika">Grafika</option>
-                  <option value="malba">Maľba</option>
-              </select>
               <input type="text" id="admin-alt-input" placeholder="Spoločný popis (voliteľné)" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; flex-grow: 1; font-size: 0.9rem;">
               <button id="admin-upload-btn" style="background: #007bff; color: white; border: none; padding: 11px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; display: none;">Nahrať všetko</button>
             </div>
@@ -130,7 +125,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         let updates = items.map(el => ({
             id: el.dataset.id,
             alt_text: el.querySelector('.admin-alt-edit').value,
-            category: el.querySelector('.admin-category-edit').value,
+            category: 'hlina',
             requested_sort: parseFloat(el.querySelector('.admin-sort-edit').value) || 999
         }));
         
@@ -161,7 +156,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     uploadBtn.onclick = async () => {
       const files = Array.from(fileInput.files);
       const alt = document.getElementById('admin-alt-input').value;
-      const category = document.getElementById('admin-category-input').value;
+      const category = 'hlina';
       
       uploadBtn.disabled = true;
       let completed = 0;
@@ -230,7 +225,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       photos.forEach((photo, index) => {
           const fullUrl = STORAGE_BASE + photo.s3_key;
           const col = document.createElement('div');
-          col.className = `col-lg-4 col-md-6 portfolio-item isotope-item filter-${photo.category} gallery-item-wrap`;
+          col.className = 'col-lg-4 col-md-6 portfolio-item isotope-item gallery-item-wrap';
           col.dataset.id = photo.id;
           
           let adminControls = '';
@@ -244,15 +239,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
                               style="width: 100%; padding: 6px 10px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 5px;">
                       </div>
                       <div style="display: flex; gap: 10px;">
-                          <div style="flex-grow: 1;">
-                              <label style="font-size: 0.7rem; color: #777; display: block; margin-bottom: 2px; font-weight: bold; text-transform: uppercase;">Kategória</label>
-                              <select class="admin-category-edit" style="width: 100%; padding: 6px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 5px;">
-                                  <option value="hlina" ${photo.category === 'hlina' ? 'selected' : ''}>Hlina</option>
-                                  <option value="grafika" ${photo.category === 'grafika' ? 'selected' : ''}>Grafika</option>
-                                  <option value="malba" ${photo.category === 'malba' ? 'selected' : ''}>Maľba</option>
-                              </select>
-                          </div>
-                          <div style="width: 60px;">
+                          <div style="width: 100%;">
                               <label style="font-size: 0.7rem; color: #777; display: block; margin-bottom: 2px; font-weight: bold; text-transform: uppercase;">Poradie</label>
                               <input type="number" class="admin-sort-edit" value="${index + 1}" 
                                   style="width: 100%; padding: 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 5px; text-align: center;">
@@ -273,7 +260,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
               <div class="portfolio-content h-100">
                 <img src="${fullUrl}" class="img-fluid" alt="${photo.alt_text || ''}">
                 <div class="portfolio-info">
-                  <h4>${photo.category.toUpperCase()}</h4>
                   <p>${photo.alt_text || ''}</p>
                   <a href="${fullUrl}" title="${photo.alt_text || ''}" data-gallery="portfolio-gallery-all"
                     class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
