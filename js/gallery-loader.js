@@ -314,11 +314,13 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
 
         col.innerHTML = `
             <div class="portfolio-content h-100">
-              <img src="${fullUrl}" class="img-fluid" alt="${photo.alt_text || ''}">
-              <div class="portfolio-info">
-                <p>${photo.alt_text || ''}</p>
-                <a href="${fullUrl}" title="${photo.alt_text || ''}" data-gallery="portfolio-gallery-all"
-                  class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+              <div class="position-relative overflow-hidden">
+                <img src="${fullUrl}" class="img-fluid" alt="${photo.alt_text || ''}">
+                <div class="portfolio-info">
+                  <p>${photo.alt_text || ''}</p>
+                  <a href="${fullUrl}" title="${photo.alt_text || ''}" data-gallery="portfolio-gallery-all"
+                    class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                </div>
               </div>
               ${adminControls}
             </div>`;
