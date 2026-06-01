@@ -1028,6 +1028,22 @@ section,
   white-space: nowrap;
 }
 
+.hero h2 .char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateX(-15px);
+  animation: char-fade-in 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  animation-delay: calc(var(--char-index) * 0.035s);
+}
+
+.hero h2 .hero-bullet {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.5);
+  animation: bullet-fade-in 0.5s ease forwards;
+  animation-delay: calc(var(--char-index) * 0.035s);
+}
+
 .hero .highlight-in,
 .hero .highlight-a,
 .hero .highlight-k {
@@ -1043,6 +1059,38 @@ section,
   font-weight: 300;
   letter-spacing: 0.5px;
   text-align: center;
+  opacity: 0;
+  transform: translateY(15px);
+  animation: hero-fade-in-up 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  animation-delay: 1.3s;
+}
+
+.hero .hero-btns {
+  opacity: 0;
+  transform: translateY(15px);
+  animation: hero-fade-in-up 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  animation-delay: 1.8s;
+}
+
+@keyframes char-fade-in {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bullet-fade-in {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes hero-fade-in-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero .btn-get-started {
