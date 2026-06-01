@@ -476,38 +476,48 @@ h6 {
   }
 
   .navmenu {
-    padding: 0;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    visibility: hidden;
+    transition: background-color 0.5s ease, visibility 0.5s ease;
     z-index: 9997;
+    pointer-events: none;
   }
 
   .navmenu ul {
-    display: none;
     list-style: none;
     position: absolute;
-    inset: 60px 20px 20px 20px;
-    padding: 10px 0;
+    inset: 0 auto 0 0;
+    width: 290px;
+    max-width: 85%;
+    padding: 70px 15px 20px 15px;
     margin: 0;
-    border-radius: 6px;
-    background-color: var(--nav-mobile-background-color);
-    border: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
-    box-shadow: none;
+    background-color: rgba(10, 18, 25, 0.98); /* dark elegant charcoal-blue background */
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.3);
     overflow-y: auto;
-    transition: 0.3s;
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), visibility 0.5s ease;
+    transform: translateX(-100%);
+    visibility: hidden;
     z-index: 9998;
+    display: block !important;
   }
 
   .navmenu a,
   .navmenu a:focus {
-    color: var(--nav-dropdown-color);
-    padding: 10px 20px;
-    font-family: var(--nav-font);
-    font-size: 17px;
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 14px 20px;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 300;
+    font-size: 1.05rem;
+    letter-spacing: 1.5px;
+    text-transform: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
     white-space: nowrap;
     transition: 0.3s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .navmenu a i,
@@ -522,7 +532,7 @@ h6 {
     justify-content: center;
     border-radius: 50%;
     transition: 0.3s;
-    background-color: color-mix(in srgb, var(--accent-color), transparent 90%);
+    background-color: rgba(255, 255, 255, 0.05);
   }
 
   .navmenu a i:hover,
@@ -534,7 +544,8 @@ h6 {
   .navmenu a:hover,
   .navmenu .active,
   .navmenu .active:focus {
-    color: var(--nav-dropdown-hover-color);
+    color: var(--accent-color);
+    background-color: rgba(255, 255, 255, 0.02);
   }
 
   .navmenu .active i,
@@ -550,7 +561,7 @@ h6 {
     z-index: 99;
     padding: 10px 0;
     margin: 10px 20px;
-    background-color: var(--nav-dropdown-background-color);
+    background-color: rgba(255, 255, 255, 0.02);
     transition: all 0.5s ease-in-out;
   }
 
@@ -578,15 +589,14 @@ h6 {
   }
 
   .mobile-nav-active .navmenu {
-    position: fixed;
-    overflow: hidden;
-    inset: 0;
-    background: rgba(33, 37, 41, 0.8);
-    transition: 0.3s;
+    background: rgba(10, 18, 25, 0.6);
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .mobile-nav-active .navmenu>ul {
-    display: block;
+    transform: translateX(0);
+    visibility: visible;
   }
 }
 
