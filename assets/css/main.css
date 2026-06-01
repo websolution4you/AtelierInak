@@ -1087,17 +1087,12 @@ section,
 }
 
 @media (max-width: 768px) {
-  .hero {
-    align-items: flex-start;
-    padding-top: calc(70px + 8vh);
-  }
-
   .hero h2 {
     font-size: 28px;
     line-height: 1.35;
     text-align: center;
     width: 100%;
-    margin-bottom: 35px;
+    margin-bottom: 25px;
   }
 
   .hero h2 .hero-word {
@@ -1113,11 +1108,11 @@ section,
     text-align: center;
     width: 100%;
     margin-top: 0;
-    margin-bottom: 25px;
+    margin-bottom: 0;
   }
 
   .hero .hero-btns {
-    margin-top: 0 !important;
+    margin-top: 20px !important;
     width: 100%;
     justify-content: center;
   }
@@ -1128,19 +1123,15 @@ section,
 }
 
 @media (max-width: 480px) {
-  .hero {
-    padding-top: calc(70px + 6vh);
-  }
-
   .hero h2 {
     font-size: 22px;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
   }
 
   .hero p {
     font-size: 16px;
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 0;
   }
 }
 
