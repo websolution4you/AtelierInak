@@ -2,13 +2,18 @@ import { auth, API_BASE } from './gcp-client.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
 (function () {
-  // TODO: Po vytvorení GCS bucketu nahraďte 'YOUR_GCS_BUCKET_NAME' názvom vášho bucketu
-  // Napríklad: 'atelierinak-media'
   const STORAGE_BASE = 'https://storage.googleapis.com/atelierinak/';
   const container = document.querySelector('.portfolio .isotope-container');
   const adminContainer = document.getElementById('admin-gallery-controls');
   
   if (!container) return;
+
+  let galleryList = [];
+  let currentPage = 1;
+  let adminMode = false;
+
+  // Track if view is mobile or desktop to detect shifts
+  let isMobile = window.innerWidth <= 768;
 
   // Pomocná funkcia na získanie autorizačných hlavičiek s čerstvým Firebase tokenom
   async function getHeaders(isJson = true) {
@@ -41,11 +46,40 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         }
       }
 
-      if (isAdmin) {
+      adminMode = isAdmin;
+      if (adminMode) {
         setupAdminUI();
       }
 
-      loadGallery(isAdmin);
+      loadGallery();
+      setupInputListeners();
+
+      // Listen to resize events and trigger layout adjustments on breakpoint cross
+      window.addEventListener('resize', () => {
+        const currentMobile = window.innerWidth <= 768;
+        if (currentMobile !== isMobile) {
+          isMobile = currentMobile;
+          currentPage = 1; // reset page on layout transition
+          renderGallery();
+        }
+      });
+    });
+  }
+
+  function setupInputListeners() {
+    // Keep internal galleryList up-to-date when admin inputs changes
+    container.addEventListener('input', (e) => {
+      const itemEl = e.target.closest('.gallery-item-wrap');
+      if (!itemEl) return;
+      const id = itemEl.dataset.id;
+      const item = galleryList.find(p => p.id == id);
+      if (!item) return;
+
+      if (e.target.classList.contains('admin-alt-edit')) {
+        item.alt_text = e.target.value;
+      } else if (e.target.classList.contains('admin-sort-edit')) {
+        item.requested_sort = parseFloat(e.target.value) || 999;
+      }
     });
   }
 
@@ -121,12 +155,11 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         btn.disabled = true;
         btn.innerText = 'Ukladám...';
         
-        const items = Array.from(document.querySelectorAll('.gallery-item-wrap'));
-        let updates = items.map(el => ({
-            id: el.dataset.id,
-            alt_text: el.querySelector('.admin-alt-edit').value,
+        let updates = galleryList.map(item => ({
+            id: item.id,
+            alt_text: item.alt_text,
             category: 'hlina',
-            requested_sort: parseFloat(el.querySelector('.admin-sort-edit').value) || 999
+            requested_sort: parseFloat(item.requested_sort) || 999
         }));
         
         updates.sort((a, b) => a.requested_sort - b.requested_sort);
@@ -188,7 +221,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
-                  s3_key: signData.key, // s3_key používame kvôli zachovaniu štruktúry stĺpcov
+                  s3_key: signData.key,
                   alt_text: alt,
                   category: category,
                   mime_type: file.type,
@@ -214,119 +247,215 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     };
   }
 
-  async function loadGallery(isAdmin) {
+  async function loadGallery() {
     try {
       const res = await fetch(`${API_BASE}/gallery`);
       if (!res.ok) throw new Error('Nepodarilo sa stiahnuť položky galérie.');
       const photos = await res.json();
 
-      container.innerHTML = '';
-      
       photos.forEach((photo, index) => {
-          const fullUrl = STORAGE_BASE + photo.s3_key;
-          const col = document.createElement('div');
-          col.className = 'col-lg-4 col-md-6 portfolio-item isotope-item gallery-item-wrap';
-          col.dataset.id = photo.id;
-          
-          let adminControls = '';
-          if (isAdmin) {
-              adminControls = `
-              <div style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: left;">
-                  <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-                      <div>
-                          <label style="font-size: 0.7rem; color: #777; display: block; margin-bottom: 2px; font-weight: bold; text-transform: uppercase;">Popis (Alt)</label>
-                          <input type="text" class="admin-alt-edit" value="${photo.alt_text || ''}" 
-                              style="width: 100%; padding: 6px 10px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 5px;">
-                      </div>
-                      <div style="display: flex; gap: 10px;">
-                          <div style="width: 100%;">
-                              <label style="font-size: 0.7rem; color: #777; display: block; margin-bottom: 2px; font-weight: bold; text-transform: uppercase;">Poradie</label>
-                              <input type="number" class="admin-sort-edit" value="${index + 1}" 
-                                  style="width: 100%; padding: 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 5px; text-align: center;">
-                          </div>
-                      </div>
-                  </div>
-                  <div style="text-align: right;">
-                      <button class="admin-del-btn" data-id="${photo.id}" data-key="${photo.s3_key}" 
-                              style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">
-                          Zmazať
-                      </button>
-                  </div>
-              </div>
-              `;
-          }
-
-          col.innerHTML = `
-              <div class="portfolio-content h-100">
-                <img src="${fullUrl}" class="img-fluid" alt="${photo.alt_text || ''}">
-                <div class="portfolio-info">
-                  <p>${photo.alt_text || ''}</p>
-                  <a href="${fullUrl}" title="${photo.alt_text || ''}" data-gallery="portfolio-gallery-all"
-                    class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
-                </div>
-                ${adminControls}
-              </div>`;
-          container.appendChild(col);
+        photo.requested_sort = index + 1;
       });
-
-      if (isAdmin) {
-          document.querySelectorAll('.admin-del-btn').forEach(btn => {
-              btn.onclick = async () => {
-                  if (!confirm('Naozaj zmazať túto fotku?')) return;
-                  btn.disabled = true;
-                  btn.innerText = 'Mažem...';
-                  try {
-                      const headers = await getHeaders();
-                      const delRes = await fetch(`${API_BASE}/gallery`, {
-                        method: 'DELETE',
-                        headers,
-                        body: JSON.stringify({ id: btn.dataset.id, s3Key: btn.dataset.key })
-                      });
-                      if (!delRes.ok) throw new Error('Vymazanie na API zlyhalo.');
-                      location.reload();
-                  } catch (err) {
-                      console.error(err);
-                      alert(`Chyba pri mazaní: ${err.message}`);
-                      btn.disabled = false;
-                      btn.innerText = 'Zmazať';
-                  }
-              };
-          });
-      }
-
-      // Re-inicializácia Isotope a GLightbox pre dynamický obsah
-      if (window.Isotope && window.imagesLoaded) {
-        imagesLoaded(container, function () {
-          const iso = new Isotope(container, {
-            itemSelector: '.isotope-item',
-            layoutMode: 'masonry',
-            filter: '*',
-            sortBy: 'original-order'
-          });
-
-          document.querySelectorAll('.portfolio .portfolio-filters li').forEach(filterBtn => {
-            filterBtn.onclick = function() {
-              document.querySelector('.portfolio .portfolio-filters .filter-active').classList.remove('filter-active');
-              this.classList.add('filter-active');
-              iso.arrange({
-                filter: this.getAttribute('data-filter')
-              });
-              if (typeof AOS !== 'undefined') {
-                AOS.refresh();
-              }
-            };
-          });
-        });
-      }
-
-      if (window.GLightbox) {
-        GLightbox({
-          selector: '.glightbox'
-        });
-      }
+      galleryList = photos;
+      currentPage = 1;
+      renderGallery();
     } catch (err) {
       console.error('Chyba načítania galérie:', err);
     }
+  }
+
+  function renderGallery() {
+    container.innerHTML = '';
+
+    const itemsPerPage = window.innerWidth <= 768 ? 6 : 9;
+    const totalPages = Math.ceil(galleryList.length / itemsPerPage);
+
+    if (currentPage > totalPages) currentPage = totalPages || 1;
+    if (currentPage < 1) currentPage = 1;
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageItems = galleryList.slice(start, end);
+
+    pageItems.forEach((photo) => {
+        const overallIndex = galleryList.indexOf(photo);
+        const fullUrl = STORAGE_BASE + photo.s3_key;
+        const col = document.createElement('div');
+        col.className = 'col-lg-4 col-md-6 portfolio-item isotope-item gallery-item-wrap';
+        col.dataset.id = photo.id;
+        
+        let adminControls = '';
+        if (adminMode) {
+            adminControls = `
+            <div style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: left;">
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                    <div>
+                        <label style="font-size: 0.7rem; color: #777; display: block; margin-bottom: 2px; font-weight: bold; text-transform: uppercase;">Popis (Alt)</label>
+                        <input type="text" class="admin-alt-edit" value="${photo.alt_text || ''}" 
+                            style="width: 100%; padding: 6px 10px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 5px;">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="width: 100%;">
+                            <label style="font-size: 0.7rem; color: #777; display: block; margin-bottom: 2px; font-weight: bold; text-transform: uppercase;">Poradie</label>
+                            <input type="number" class="admin-sort-edit" value="${photo.requested_sort || (overallIndex + 1)}" 
+                                style="width: 100%; padding: 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 5px; text-align: center;">
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <button class="admin-del-btn" data-id="${photo.id}" data-key="${photo.s3_key}" 
+                            style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">
+                        Zmazať
+                    </button>
+                </div>
+            </div>
+            `;
+        }
+
+        col.innerHTML = `
+            <div class="portfolio-content h-100">
+              <img src="${fullUrl}" class="img-fluid" alt="${photo.alt_text || ''}">
+              <div class="portfolio-info">
+                <p>${photo.alt_text || ''}</p>
+                <a href="${fullUrl}" title="${photo.alt_text || ''}" data-gallery="portfolio-gallery-all"
+                  class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+              </div>
+              ${adminControls}
+            </div>`;
+        container.appendChild(col);
+    });
+
+    setupDeleteButtons();
+    renderPaginationControls(totalPages);
+
+    // Re-initialize Isotope & GLightbox
+    if (window.Isotope && window.imagesLoaded) {
+      imagesLoaded(container, function () {
+        const iso = new Isotope(container, {
+          itemSelector: '.isotope-item',
+          layoutMode: 'masonry',
+          filter: '*',
+          sortBy: 'original-order'
+        });
+        
+        iso.layout();
+
+        if (typeof AOS !== 'undefined') {
+          AOS.refresh();
+        }
+      });
+    }
+
+    if (window.GLightbox) {
+      GLightbox({
+        selector: '.glightbox'
+      });
+    }
+  }
+
+  function setupDeleteButtons() {
+    if (!adminMode) return;
+    document.querySelectorAll('.admin-del-btn').forEach(btn => {
+        btn.onclick = async () => {
+            if (!confirm('Naozaj zmazať túto fotku?')) return;
+            btn.disabled = true;
+            btn.innerText = 'Mažem...';
+            try {
+                const headers = await getHeaders();
+                const delRes = await fetch(`${API_BASE}/gallery`, {
+                  method: 'DELETE',
+                  headers,
+                  body: JSON.stringify({ id: btn.dataset.id, s3Key: btn.dataset.key })
+                });
+                if (!delRes.ok) throw new Error('Vymazanie na API zlyhalo.');
+                location.reload();
+            } catch (err) {
+                console.error(err);
+                alert(`Chyba pri mazaní: ${err.message}`);
+                btn.disabled = false;
+                btn.innerText = 'Zmazať';
+            }
+        };
+    });
+  }
+
+  function renderPaginationControls(totalPages) {
+    const portfolioContainer = container.closest('.container');
+    if (!portfolioContainer) return;
+
+    let paginationDiv = document.getElementById('gallery-pagination');
+    if (!paginationDiv) {
+      paginationDiv = document.createElement('div');
+      paginationDiv.id = 'gallery-pagination';
+      paginationDiv.className = 'd-flex justify-content-center align-items-center gap-2 mt-5';
+      portfolioContainer.appendChild(paginationDiv);
+    }
+    paginationDiv.innerHTML = '';
+
+    if (totalPages <= 1) {
+      return;
+    }
+
+    function scrollToGallery() {
+      const el = document.getElementById('portfolio');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // Prev Button
+    const prevBtn = document.createElement('button');
+    prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.style.cssText = 'border: 1px solid #ddd; background: #fff; color: #444; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;';
+    if (currentPage > 1) {
+      prevBtn.onmouseenter = () => { prevBtn.style.borderColor = '#e67e22'; prevBtn.style.color = '#e67e22'; };
+      prevBtn.onmouseleave = () => { prevBtn.style.borderColor = '#ddd'; prevBtn.style.color = '#444'; };
+      prevBtn.onclick = () => { currentPage--; renderGallery(); scrollToGallery(); };
+    } else {
+      prevBtn.style.opacity = '0.5';
+      prevBtn.style.cursor = 'not-allowed';
+    }
+    paginationDiv.appendChild(prevBtn);
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+      const pageBtn = document.createElement('button');
+      pageBtn.innerText = i;
+      pageBtn.style.cssText = 'border: 1px solid #ddd; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; font-family: "Raleway", sans-serif; font-weight: bold; cursor: pointer;';
+      if (i === currentPage) {
+        pageBtn.style.background = '#e67e22';
+        pageBtn.style.borderColor = '#e67e22';
+        pageBtn.style.color = '#fff';
+      } else {
+        pageBtn.style.background = '#fff';
+        pageBtn.style.color = '#444';
+        pageBtn.onmouseenter = () => { pageBtn.style.borderColor = '#e67e22'; pageBtn.style.color = '#e67e22'; };
+        pageBtn.onmouseleave = () => {
+          if (i !== currentPage) {
+            pageBtn.style.borderColor = '#ddd';
+            pageBtn.style.color = '#444';
+          }
+        };
+        pageBtn.onclick = () => { currentPage = i; renderGallery(); scrollToGallery(); };
+      }
+      paginationDiv.appendChild(pageBtn);
+    }
+
+    // Next Button
+    const nextBtn = document.createElement('button');
+    nextBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.style.cssText = 'border: 1px solid #ddd; background: #fff; color: #444; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;';
+    if (currentPage < totalPages) {
+      nextBtn.onmouseenter = () => { nextBtn.style.borderColor = '#e67e22'; nextBtn.style.color = '#e67e22'; };
+      nextBtn.onmouseleave = () => { nextBtn.style.borderColor = '#ddd'; nextBtn.style.color = '#444'; };
+      nextBtn.onclick = () => { currentPage++; renderGallery(); scrollToGallery(); };
+    } else {
+      nextBtn.style.opacity = '0.5';
+      nextBtn.style.cursor = 'not-allowed';
+    }
+    paginationDiv.appendChild(nextBtn);
   }
 
   init();
