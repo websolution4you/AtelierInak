@@ -270,7 +270,7 @@ h6 {
 .header .cta-btn,
 .header .cta-btn:focus {
   color: var(--contrast-color);
-  font-size: 13px;
+  font-size: 15px;
   padding: 7px 25px;
   margin: 0 0 0 30px;
   border-radius: 4px;
@@ -361,7 +361,7 @@ h6 {
   .navmenu a,
   .navmenu a:focus {
     color: var(--nav-color);
-    font-size: 13px;
+    font-size: 15px;
     padding: 0 2px;
     font-family: var(--nav-font);
     font-weight: 500;
