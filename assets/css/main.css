@@ -241,15 +241,30 @@ h6 {
 }
 
 .header .logo img {
-  max-height: 50px;
+  max-height: 44px;
   margin-right: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header .logo h1 {
-  font-size: 30px;
+  font-family: "Raleway", sans-serif;
+  font-size: 24px;
   margin: 0;
-  font-weight: 700;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: var(--heading-color);
+  display: flex;
+  align-items: center;
+}
+
+.header .logo h1 span {
+  font-weight: 800;
+  color: #e67e22; /* signature orange */
+  margin-left: 6px;
 }
 
 .header .cta-btn,
@@ -974,31 +989,30 @@ section,
 }
 
 .hero h2 {
+  font-family: "Raleway", sans-serif;
   margin: 0;
-  font-size: 48px;
-  font-weight: 700;
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: 3px;
   text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
-.hero .highlight-in {
-  color: #00ffcc;
-  text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
-}
-
-.hero .highlight-a {
-  color: #ff8800;
-  text-shadow: 0 0 10px rgba(255, 136, 0, 0.5);
-}
-
+.hero .highlight-in,
+.hero .highlight-a,
 .hero .highlight-k {
-  color: #ffcc00;
-  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  color: #e67e22;
+  font-weight: 800;
+  text-shadow: none;
 }
 
 .hero p {
   color: color-mix(in srgb, var(--default-color), transparent 20%);
-  margin: 10px 0 0 0;
-  font-size: 24px;
+  margin: 15px 0 0 0;
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
 }
 
 .hero .btn-get-started {
