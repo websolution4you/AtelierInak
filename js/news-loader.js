@@ -312,7 +312,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         let adminControls = '';
         if (adminMode) {
             adminControls = `
-            <div style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; text-align: left;">
+            <div style="position: relative; z-index: 2; margin-top: 15px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; text-align: left;">
                 <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                     <div style="display: flex; gap: 10px;">
                         <div style="flex-grow: 1;">
@@ -344,7 +344,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         }
 
         col.innerHTML = `
-          <div class="news-item" style="height: 100%; display: flex; flex-direction: column;">
+          <div class="news-item" style="position: relative; height: 100%; display: flex; flex-direction: column;">
             <div class="news-img">
               <img src="${fullUrl}" alt="${item.title || ''}" class="img-fluid">
             </div>

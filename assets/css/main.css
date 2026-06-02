@@ -2041,6 +2041,7 @@ section,
 # News Section
 --------------------------------------------------------------*/
 .news .news-item {
+  position: relative;
   background-color: var(--surface-color);
   box-shadow: 0px 2px 20px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease-in-out;
