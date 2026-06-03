@@ -2337,3 +2337,45 @@ section,
   box-shadow: 0 25px 50px rgba(26, 54, 93, 0.12) !important;
   border-color: rgba(230, 126, 34, 0.3) !important;
 }
+
+/* About Section Grid Alignment on Desktop */
+@media (min-width: 992px) {
+  .about-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 30px;
+    row-gap: 20px;
+  }
+  .about-grid > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  .about-left-text {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .about-right-text {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .about-left-image {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .about-right-image {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .about-left-image img, .about-right-image img {
+    width: 100%;
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    margin: 0 !important;
+  }
+  /* Remove mt-4 on desktop since grid gap handles row spacing */
+  .about-left-image img, .about-right-image .position-relative {
+    margin-top: 0 !important;
+  }
+}
