@@ -31,6 +31,81 @@
   <!-- Main CSS File -->
   <link href="assets/css/main.css" rel="stylesheet">
 
+  <style>
+    /* Force immediate load of About image card styles to bypass CSS cache */
+    .about-image-card {
+      position: relative;
+      overflow: hidden !important;
+      border-radius: 20px !important;
+      background: #ffffff !important;
+      box-shadow: 
+        0 15px 35px rgba(26, 54, 93, 0.08), 
+        0 5px 15px rgba(0, 0, 0, 0.06), 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+      border: 1px solid rgba(26, 54, 93, 0.06) !important;
+      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+      aspect-ratio: 4/5 !important;
+      width: 100% !important;
+      display: block !important;
+    }
+    
+    .about-image-card:hover {
+      transform: translateY(-6px) scale(1.01) !important;
+      box-shadow: 
+        0 25px 45px rgba(230, 126, 34, 0.18), 
+        0 12px 25px rgba(0, 0, 0, 0.08), 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6) !important;
+      border-color: rgba(230, 126, 34, 0.25) !important;
+    }
+    
+    .about-image-card img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block !important;
+      border-radius: 20px !important; /* Applying border radius directly to the image */
+    }
+
+    /* Spacing on mobile */
+    @media (max-width: 991px) {
+      .about-left-image, .about-right-image {
+        margin-top: 24px !important;
+      }
+    }
+
+    /* About Section Grid Alignment on Desktop */
+    @media (min-width: 992px) {
+      .about-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        grid-template-rows: auto auto !important;
+        column-gap: 30px !important;
+        row-gap: 20px !important;
+      }
+      .about-grid > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+      }
+      .about-left-text {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+      }
+      .about-right-text {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+      }
+      .about-left-image {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+      }
+      .about-right-image {
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+      }
+    }
+  </style>
+
   <!-- =======================================================
   * Template Name: Dewi
   * Template URL: https://bootstrapmade.com/dewi-free-multi-purpose-html-template/
@@ -136,7 +211,7 @@
           <!-- Left image -->
           <div class="col-lg-6 about-left-image" data-aos="fade-up" data-aos-delay="100">
             <div class="about-image-card">
-              <img src="images/ira_praca.jpg" class="img-fluid" alt="Irena Lehotská pri práci">
+              <img src="images/ira_praca_nova.jpg" class="img-fluid" alt="Irena Lehotská pri práci">
             </div>
           </div>
 
