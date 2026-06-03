@@ -9,44 +9,41 @@ public class ImageFixer {
     public static void Fix(string srcPath, string dstPath) {
         using (Bitmap bmp = new Bitmap(srcPath)) {
             using (Graphics g = Graphics.FromImage(bmp)) {
-                // Parameters for the patch
-                int y = 880;      // Vertical start of the wheel rim
-                int h = 90;       // Height of the rim patch
-                int w = 300;      // Width of the patch (covers the centered text)
+                // Precise parameters based on edge scanning
+                int y = 786;       // Text starts at y=788, we start at 786
+                int h = 22;        // Text height is 15px, we cover 22px
+                int w = 162;       // Text width is 139px (X=499 to 638), we cover 162px (X=490 to 652)
                 
-                int leftX = 50;    // Source X on the left (clean wheel)
-                int rightX = 674;  // Source X on the right (clean wheel)
-                int destX = 362;   // Destination X (centered text region)
+                int leftX = 318;   // Clean left source (X=318 to 480)
+                int rightX = 662;  // Clean right source (X=662 to 824)
+                int destX = 490;   // Destination text region (X=490 to 652)
 
                 Rectangle leftRect = new Rectangle(leftX, y, w, h);
                 Rectangle rightRect = new Rectangle(rightX, y, w, h);
                 Rectangle destRect = new Rectangle(destX, y, w, h);
                 
-                // Clone left patch
+                // Copy left clean texture to destination
                 using (Bitmap leftPatch = bmp.Clone(leftRect, PixelFormat.Format32bppArgb)) {
-                    // Draw left patch over destination
                     g.DrawImage(leftPatch, destRect);
                 }
                 
-                // Clone right patch
+                // Blend right clean texture with 50% opacity to average gradients and match the wheel curve
                 using (Bitmap rightPatch = bmp.Clone(rightRect, PixelFormat.Format32bppArgb)) {
-                    // Create image attributes for 50% opacity blending
                     ImageAttributes attrs = new ImageAttributes();
                     ColorMatrix matrix = new ColorMatrix(new float[][] {
                         new float[] {1, 0, 0, 0, 0},
                         new float[] {0, 1, 0, 0, 0},
                         new float[] {0, 0, 1, 0, 0},
-                        new float[] {0, 0, 0, 0.5f, 0}, // 50% alpha
+                        new float[] {0, 0, 0, 0.5f, 0}, // 50% opacity
                         new float[] {0, 0, 0, 0, 1}
                     });
                     attrs.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
                     
-                    // Draw right patch over destination with 50% opacity
                     g.DrawImage(rightPatch, destRect, 0, 0, w, h, GraphicsUnit.Pixel, attrs);
                 }
             }
             
-            // Save as JPEG with 95% quality
+            // Save as high quality JPEG (95% quality)
             ImageCodecInfo jpgEncoder = GetEncoder(ImageFormat.Jpeg);
             System.Drawing.Imaging.Encoder myEncoder = System.Drawing.Imaging.Encoder.Quality;
             EncoderParameters myEncoderParameters = new EncoderParameters(1);
