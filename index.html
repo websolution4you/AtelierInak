@@ -72,38 +72,6 @@
         margin-top: 24px !important;
       }
     }
-
-    /* About Section Grid Alignment on Desktop */
-    @media (min-width: 992px) {
-      .about-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        grid-template-rows: auto auto !important;
-        column-gap: 30px !important;
-        row-gap: 20px !important;
-      }
-      .about-grid > div {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-      }
-      .about-left-text {
-        grid-column: 1 !important;
-        grid-row: 1 !important;
-      }
-      .about-right-text {
-        grid-column: 2 !important;
-        grid-row: 1 !important;
-      }
-      .about-left-image {
-        grid-column: 1 !important;
-        grid-row: 2 !important;
-      }
-      .about-right-image {
-        grid-column: 2 !important;
-        grid-row: 2 !important;
-      }
-    }
   </style>
 
   <!-- =======================================================
@@ -198,26 +166,19 @@
 
       <div class="container">
 
-        <div class="row gy-4 about-grid">
-          <!-- Left introduction text -->
-          <div class="col-lg-6 about-left-text" data-aos="fade-up" data-aos-delay="100">
+        <div class="row gy-4">
+          <!-- Left introduction text (Full width) -->
+          <div class="col-12" data-aos="fade-up" data-aos-delay="100">
             <p>Volám sa Irena Lehotská. Vo svojom ateliéri spájam odborné skúsenosti z Paríža a Bratislavy a pod mojím vedením pomáham deťom aj dospelým
               objavovať ich vnútorný svet a rozvíjať potenciál, ktorý v nich drieme.</p>
             <div class="text-end pe-4" style="margin-top: -15px; margin-bottom: 20px;">
               <span style="font-family: 'Sacramento', cursive; font-size: 2.8rem; color: #1a365d; display: inline-block; transform: rotate(-3deg);">Irena Lehotská</span>
             </div>
           </div>
-          
-          <!-- Left image -->
-          <div class="col-lg-6 about-left-image" data-aos="fade-up" data-aos-delay="100">
-            <div class="about-image-card">
-              <img src="images/ira_praca_nova_v2.jpg" class="img-fluid" alt="Irena Lehotská pri práci">
-            </div>
-          </div>
 
-          <!-- Right introduction text -->
-          <div class="col-lg-6 about-right-text" data-aos="fade-up" data-aos-delay="250">
-            <div class="content ps-0 ps-lg-5">
+          <!-- Right introduction text (Full width) -->
+          <div class="col-12" data-aos="fade-up" data-aos-delay="150">
+            <div class="content">
               <p>Ateliér INAK je miestom, kde sa stretáva odborná arteterapia s nespútanou kreativitou. Mojím poslaním je
                 poskytovať bezpečné prostredie pre sebavyjadrenie a emocionálny rast prostredníctvom rôznorodých
                 výtvarných techník.</p>
@@ -235,9 +196,16 @@
               </p>
             </div>
           </div>
+          
+          <!-- Left image -->
+          <div class="col-lg-6 about-left-image" data-aos="fade-up" data-aos-delay="200">
+            <div class="about-image-card">
+              <img src="images/ira_praca_nova_v2.jpg" class="img-fluid" alt="Irena Lehotská pri práci">
+            </div>
+          </div>
 
           <!-- Right image -->
-          <div class="col-lg-6 about-right-image ps-0 ps-lg-5" data-aos="fade-up" data-aos-delay="250">
+          <div class="col-lg-6 about-right-image" data-aos="fade-up" data-aos-delay="250">
             <div class="about-image-card">
               <img src="images/gallery_photo1.jpg" class="img-fluid" alt="Umelecké výrobky">
             </div>
