@@ -2151,7 +2151,7 @@ section,
   background: #d35400;
 }
 
-/* 2. Static, extremely subtle organic background blobs (balloons/clay-like shapes) */
+/* 2. Static, elegant organic background blobs (balloons/clay-like shapes) */
 .services, .features, .testimonials, .about {
   position: relative;
   overflow: hidden;
@@ -2162,11 +2162,11 @@ section,
   position: absolute;
   top: 10%;
   left: -5%;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(230, 126, 34, 0.06) 0%, rgba(255,255,255,0) 70%);
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(230, 126, 34, 0.16) 0%, rgba(230, 126, 34, 0) 80%);
   border-radius: 43% 57% 55% 45% / 40% 45% 55% 60%;
-  filter: blur(35px);
+  filter: blur(40px);
   pointer-events: none;
   z-index: 0;
 }
@@ -2176,9 +2176,9 @@ section,
   position: absolute;
   bottom: 8%;
   right: -5%;
-  width: 380px;
-  height: 380px;
-  background: radial-gradient(circle, rgba(26, 54, 93, 0.04) 0%, rgba(255,255,255,0) 70%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(26, 54, 93, 0.12) 0%, rgba(26, 54, 93, 0) 80%);
   border-radius: 50% 40% 60% 40% / 40% 50% 40% 60%;
   filter: blur(45px);
   pointer-events: none;
@@ -2190,9 +2190,9 @@ section,
   position: absolute;
   top: 15%;
   right: -8%;
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, rgba(241, 196, 15, 0.05) 0%, rgba(255,255,255,0) 70%);
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(241, 196, 15, 0.16) 0%, rgba(241, 196, 15, 0) 80%);
   border-radius: 40% 60% 40% 60% / 50% 40% 60% 50%;
   filter: blur(50px);
   pointer-events: none;
@@ -2204,11 +2204,11 @@ section,
   position: absolute;
   bottom: 5%;
   left: 2%;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(230, 126, 34, 0.05) 0%, rgba(255,255,255,0) 70%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(230, 126, 34, 0.16) 0%, rgba(230, 126, 34, 0) 80%);
   border-radius: 60% 40% 50% 50% / 50% 50% 40% 60%;
-  filter: blur(30px);
+  filter: blur(35px);
   pointer-events: none;
   z-index: 0;
 }
