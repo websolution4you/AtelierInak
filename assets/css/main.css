@@ -2371,12 +2371,11 @@ section,
   display: block;
 }
 
-/* Crop the right edge of the left image to hide scanner smudge line */
-.about-left-image .about-image-card img {
-  width: 100.5% !important;
-  max-width: 100.5% !important;
-  transform: scale(1.035);
-  transform-origin: left center;
+/* Spacing on mobile */
+@media (max-width: 991px) {
+  .about-left-image, .about-right-image {
+    margin-top: 24px;
+  }
 }
 
 /* About Section Grid Alignment on Desktop */
