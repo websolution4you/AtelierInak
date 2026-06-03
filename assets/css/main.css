@@ -2338,6 +2338,47 @@ section,
   border-color: rgba(230, 126, 34, 0.3) !important;
 }
 
+/* About Section 3D Image Cards */
+.about-image-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+  /* Premium 3D layered shadow effect */
+  box-shadow: 
+    0 15px 35px rgba(26, 54, 93, 0.08), 
+    0 5px 15px rgba(0, 0, 0, 0.06), 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(26, 54, 93, 0.06);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  aspect-ratio: 4/5;
+  width: 100%;
+}
+
+.about-image-card:hover {
+  transform: translateY(-6px) scale(1.01) !important;
+  box-shadow: 
+    0 25px 45px rgba(230, 126, 34, 0.18), 
+    0 12px 25px rgba(0, 0, 0, 0.08), 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  border-color: rgba(230, 126, 34, 0.25);
+}
+
+.about-image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Crop the right edge of the left image to hide scanner smudge line */
+.about-left-image .about-image-card img {
+  width: 100.5% !important;
+  max-width: 100.5% !important;
+  transform: scale(1.035);
+  transform-origin: left center;
+}
+
 /* About Section Grid Alignment on Desktop */
 @media (min-width: 992px) {
   .about-grid {
@@ -2367,15 +2408,5 @@ section,
   .about-right-image {
     grid-column: 2;
     grid-row: 2;
-  }
-  .about-left-image img, .about-right-image img {
-    width: 100%;
-    aspect-ratio: 4/5;
-    object-fit: cover;
-    margin: 0 !important;
-  }
-  /* Remove mt-4 on desktop since grid gap handles row spacing */
-  .about-left-image img, .about-right-image .position-relative {
-    margin-top: 0 !important;
   }
 }
