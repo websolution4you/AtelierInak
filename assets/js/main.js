@@ -206,4 +206,33 @@
   window.addEventListener('load', navmenuScrollspy);
   document.addEventListener('scroll', navmenuScrollspy);
 
+  /**
+   * Service link click handlers to scroll and switch tabs
+   */
+  document.querySelectorAll('.service-tab-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const targetTabId = this.getAttribute('data-target-tab');
+      const targetTabEl = document.querySelector(`[data-bs-target="${targetTabId}"]`);
+      
+      if (targetTabEl) {
+        // Activate the Bootstrap tab
+        const tab = bootstrap.Tab.getOrCreateInstance(targetTabEl);
+        tab.show();
+      }
+      
+      const featuresSection = document.querySelector('#features');
+      if (featuresSection) {
+        // Scroll to the features section, accounting for scrollMarginTop
+        let scrollMarginTop = getComputedStyle(featuresSection).scrollMarginTop;
+        const offset = featuresSection.offsetTop - (parseInt(scrollMarginTop) || 0);
+        window.scrollTo({
+          top: offset,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+
 })();
