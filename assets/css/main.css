@@ -601,6 +601,7 @@ h6 {
   .mobile-nav-active.scrolled .header {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    transition: none !important;
   }
 }
 
@@ -2389,4 +2390,5 @@ section,
 .mobile-nav-active.scrolled .header {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  transition: none !important;
 }
