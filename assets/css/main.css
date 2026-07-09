@@ -597,7 +597,8 @@ h6 {
     visibility: visible;
   }
 
-  .mobile-nav-active .header {
+  .mobile-nav-active .header,
+  .mobile-nav-active.scrolled .header {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
@@ -2381,4 +2382,11 @@ section,
   .about-left-image, .about-right-image {
     margin-top: 24px;
   }
+}
+
+/* absolute override for scrolled/fixed header containing block bug in mobile menu */
+.mobile-nav-active .header,
+.mobile-nav-active.scrolled .header {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
