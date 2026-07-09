@@ -5,7 +5,8 @@ const path = require('path');
 const port = 5000;
 
 const server = http.createServer((req, res) => {
-  let filePath = '.' + req.url;
+  const urlPath = req.url.split('?')[0];
+  let filePath = '.' + urlPath;
   if (filePath === './') {
     filePath = './index.html';
   }
@@ -23,6 +24,7 @@ const server = http.createServer((req, res) => {
     '.wav': 'audio/wav',
     '.mp4': 'video/mp4',
     '.woff': 'application/font-woff',
+    '.woff2': 'font/woff2',
     '.ttf': 'application/font-ttf',
     '.eot': 'application/vnd.ms-fontobject',
     '.otf': 'application/font-otf',
