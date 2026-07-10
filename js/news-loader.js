@@ -125,7 +125,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     adminContainer.innerHTML = `
       <div style="text-align: left; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border: 1px solid #eee; margin-bottom: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-            <h4 style="margin: 0; color: #e67e22; font-family: 'Raleway', sans-serif; font-weight: 700; min-width: 200px;">Administrácia Noviniek</h4>
+            <h4 style="margin: 0; color: #e67e22; font-family: 'Raleway', sans-serif; font-weight: 700; min-width: 200px;">Administrácia Aktuálne</h4>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button id="admin-news-save-all-btn" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: bold; white-space: nowrap;">Uložiť zmeny</button>
                 <button id="admin-news-logout-btn" style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #666; white-space: nowrap;">Odhlásiť sa</button>
@@ -133,16 +133,16 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         </div>
         
         <div style="background: #fcfcfc; padding: 20px; border-radius: 10px; border: 1px solid #eaeaea;">
-            <p style="font-size: 0.9rem; margin-bottom: 15px; color: #444; font-weight: bold;">Pridať novú novinku:</p>
+            <p style="font-size: 0.9rem; margin-bottom: 15px; color: #444; font-weight: bold;">Pridať nový príspevok:</p>
             <div style="display: flex; flex-direction: column; gap: 15px;">
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                   <label for="admin-news-file-input" style="background: #e67e22; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: bold;">+ Zvoliť obrázok/plagát</label>
                   <input type="file" id="admin-news-file-input" accept="image/*" style="display:none;">
                   <div id="admin-news-preview-container"></div>
               </div>
-              <input type="text" id="admin-news-title-input" placeholder="Nadpis novinky" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; width: 100%;">
+              <input type="text" id="admin-news-title-input" placeholder="Nadpis príspevku" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; width: 100%;">
               <textarea id="admin-news-desc-input" placeholder="Celý text článku (môže byť akokoľvek dlhý)" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; min-height: 120px; width: 100%;"></textarea>
-              <button id="admin-news-upload-btn" style="background: #007bff; color: white; border: none; padding: 11px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; display: none; align-self: flex-start;">Pridať novinku</button>
+              <button id="admin-news-upload-btn" style="background: #007bff; color: white; border: none; padding: 11px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; display: none; align-self: flex-start;">Pridať príspevok</button>
             </div>
             <div id="admin-news-upload-status" style="margin-top: 15px; font-size: 0.85rem; font-weight: bold; color: #666;"></div>
         </div>
@@ -259,7 +259,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
           if (!dbRes.ok) throw new Error('Zápis do databázy zlyhal');
 
           status.style.color = 'green';
-          status.innerText = `Novinka úspešne pridaná!`;
+          status.innerText = `Príspevok úspešne pridaný!`;
           setTimeout(() => location.reload(), 1000);
       } catch (err) {
           console.error(err);
@@ -330,7 +330,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
                     </div>
                 </div>
                 <div style="text-align: right;">
-                    <button class="admin-news-del-btn" data-id="${item.id}" data-key="${item.s3_key}" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">Zmazať novinku</button>
+                    <button class="admin-news-del-btn" data-id="${item.id}" data-key="${item.s3_key}" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">Zmazať príspevok</button>
                 </div>
             </div>
             `;
@@ -370,7 +370,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     if (!adminMode) return;
     document.querySelectorAll('.admin-news-del-btn').forEach(btn => {
         btn.onclick = async () => {
-            if (!confirm('Naozaj zmazať túto novinku?')) return;
+            if (!confirm('Naozaj zmazať tento príspevok?')) return;
             btn.disabled = true;
             btn.innerText = 'Mažem...';
             try {
@@ -380,13 +380,13 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
                   headers,
                   body: JSON.stringify({ id: btn.dataset.id, s3Key: btn.dataset.key })
                 });
-                if (!delRes.ok) throw new Error('Vymazanie novinky zlyhalo.');
+                if (!delRes.ok) throw new Error('Vymazanie príspevku zlyhalo.');
                 location.reload();
             } catch (err) {
                 console.error(err);
-                alert(`Chyba pri mazaní novinky: ${err.message}`);
+                alert(`Chyba pri mazaní príspevku: ${err.message}`);
                 btn.disabled = false;
-                btn.innerText = 'Zmazať novinku';
+                btn.innerText = 'Zmazať príspevok';
             }
         };
     });
@@ -407,7 +407,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     }
 
     function scrollToNews() {
-      const el = document.getElementById('news');
+      const el = document.getElementById('aktualne');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       }
