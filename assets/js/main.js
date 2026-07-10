@@ -175,8 +175,9 @@
         setTimeout(() => {
           let section = document.querySelector(window.location.hash);
           let scrollMarginTop = getComputedStyle(section).scrollMarginTop;
+          const offset = (section.getBoundingClientRect().top + window.scrollY) - (parseInt(scrollMarginTop) || 0);
           window.scrollTo({
-            top: section.offsetTop - parseInt(scrollMarginTop),
+            top: offset,
             behavior: 'smooth'
           });
         }, 100);
@@ -226,7 +227,7 @@
       if (featuresSection) {
         // Scroll to the features section, accounting for scrollMarginTop
         let scrollMarginTop = getComputedStyle(featuresSection).scrollMarginTop;
-        const offset = featuresSection.offsetTop - (parseInt(scrollMarginTop) || 0);
+        const offset = (featuresSection.getBoundingClientRect().top + window.scrollY) - (parseInt(scrollMarginTop) || 0);
         window.scrollTo({
           top: offset,
           behavior: 'smooth'
