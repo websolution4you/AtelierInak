@@ -1,5 +1,22 @@
-import { auth, API_BASE } from './gcp-client.js';
+import { auth, db, storage } from './firebase-config.js?v=2.2';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  orderBy, 
+  writeBatch 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 (function () {
   const STORAGE_BASE = 'https://storage.googleapis.com/atelierinak/';
@@ -8,58 +25,38 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
   
   if (!container) return;
 
+  const DEFAULT_GALLERY = [
+    { id: 'def-1', s3_key: 'gallery/1780503966407-gallery_photo1.jpg', alt_text: 'Umelecké výrobky z Ateliéru', sort_order: 1 },
+    { id: 'def-2', s3_key: 'gallery/1780503966994-gallery_photo2.jpg', alt_text: 'Tvorba s hlinou', sort_order: 2 },
+    { id: 'def-3', s3_key: 'gallery/1780503967477-gallery_photo3.jpg', alt_text: 'Keramické dielo', sort_order: 3 },
+    { id: 'def-4', s3_key: 'gallery/1780503967911-gallery_photo4.jpg', alt_text: 'Ručná práca v ateliéri', sort_order: 4 },
+    { id: 'def-5', s3_key: 'gallery/1780503968450-gallery_photo5.jpg', alt_text: 'Ateliér INAK Levoča', sort_order: 5 },
+    { id: 'def-6', s3_key: 'gallery/1780503969555-gallery_photo7.jpg', alt_text: 'Keramika a kreativita', sort_order: 6 },
+    { id: 'def-7', s3_key: 'gallery/1780657265416-gallery_photo11.jpg', alt_text: 'Umenie a arteterapia', sort_order: 7 },
+    { id: 'def-8', s3_key: 'gallery/1780503965592-background_home.jpg', alt_text: 'Tvorivý proces', sort_order: 8 }
+  ];
+
   let galleryList = [];
   let currentPage = 1;
   let adminMode = false;
-
-  // Track if view is mobile or desktop to detect shifts
   let isMobile = window.innerWidth <= 768;
 
-  // Pomocná funkcia na získanie autorizačných hlavičiek s čerstvým Firebase tokenom
-  async function getHeaders(isJson = true) {
-    const user = auth.currentUser;
-    if (!user) return {};
-    const token = await user.getIdToken();
-    const headers = { 'Authorization': `Bearer ${token}` };
-    if (isJson) {
-      headers['Content-Type'] = 'application/json';
-    }
-    return headers;
-  }
-
   async function init() {
-    // Sledujeme zmenu stavu prihlásenia
     onAuthStateChanged(auth, async (user) => {
-      let isAdmin = false;
+      adminMode = !!user;
 
-      if (user) {
-        try {
-          const headers = await getHeaders();
-          // Overenie admin práv na backend-e
-          const checkRes = await fetch(`${API_BASE}/check-admin`, { headers });
-          if (checkRes.ok) {
-            const data = await checkRes.json();
-            isAdmin = data.is_admin || false;
-          }
-        } catch (err) {
-          console.error("Chyba overenia roly admina:", err);
-        }
-      }
-
-      adminMode = isAdmin;
       if (adminMode) {
         setupAdminUI();
       }
 
-      loadGallery();
+      await loadGallery();
       setupInputListeners();
 
-      // Listen to resize events and trigger layout adjustments on breakpoint cross
       window.addEventListener('resize', () => {
         const currentMobile = window.innerWidth <= 768;
         if (currentMobile !== isMobile) {
           isMobile = currentMobile;
-          currentPage = 1; // reset page on layout transition
+          currentPage = 1;
           renderGallery();
         }
       });
@@ -67,7 +64,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
   }
 
   function setupInputListeners() {
-    // Keep internal galleryList Alt text up-to-date when admin types
     container.addEventListener('input', (e) => {
       if (e.target.classList.contains('admin-alt-edit')) {
         const itemEl = e.target.closest('.gallery-item-wrap');
@@ -80,7 +76,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       }
     });
 
-    // Commit sort order and swap on change (blur or Enter)
     container.addEventListener('change', (e) => {
       if (e.target.classList.contains('admin-sort-edit')) {
         const itemEl = e.target.closest('.gallery-item-wrap');
@@ -94,20 +89,17 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         const oldSort = item.requested_sort;
         if (oldSort === newSort) return;
 
-        // Find if another item has newSort
         const otherItem = galleryList.find(p => p.id != id && p.requested_sort === newSort);
         if (otherItem) {
           otherItem.requested_sort = oldSort;
         }
         item.requested_sort = newSort;
 
-        // Sort and re-render
         galleryList.sort((a, b) => a.requested_sort - b.requested_sort);
         renderGallery();
       }
     });
 
-    // Blur on Enter keypress to trigger change event
     container.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.classList.contains('admin-sort-edit')) {
         e.preventDefault();
@@ -140,7 +132,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
               <button id="admin-upload-btn" style="background: #007bff; color: white; border: none; padding: 11px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; display: none;">Nahrať všetko</button>
             </div>
             
-            <!-- Preview Section -->
             <div id="admin-preview-container" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;"></div>
             
             <div id="admin-upload-status" style="margin-top: 15px; font-size: 0.85rem; font-weight: bold; color: #666;"></div>
@@ -174,10 +165,10 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         } else {
             uploadBtn.style.display = 'none';
         }
-    }
+    };
 
     document.getElementById('admin-logout-btn').onclick = async () => {
-        if(confirm('Naozaj sa chcete odhlásiť?')) {
+        if (confirm('Naozaj sa chcete odhlásiť?')) {
             await signOut(auth);
             location.reload();
         }
@@ -187,29 +178,33 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         const btn = document.getElementById('admin-save-all-btn');
         btn.disabled = true;
         btn.innerText = 'Ukladám...';
-        
-        let updates = galleryList.map(item => ({
-            id: item.id,
-            alt_text: item.alt_text,
-            category: 'hlina',
-            requested_sort: parseFloat(item.requested_sort) || 999
-        }));
-        
-        updates.sort((a, b) => a.requested_sort - b.requested_sort);
-        // Priradíme čisté indexy triedenia (0, 1, 2...)
-        for (let i = 0; i < updates.length; i++) {
-            updates[i].sort_order = i;
-        }
 
         try {
-            const headers = await getHeaders();
-            const res = await fetch(`${API_BASE}/gallery/batch`, {
-              method: 'PUT',
-              headers,
-              body: JSON.stringify({ updates })
-            });
+            const batch = writeBatch(db);
+            for (let i = 0; i < galleryList.length; i++) {
+                const item = galleryList[i];
+                const sortOrder = i;
 
-            if (!res.ok) throw new Error('Hromadný zápis zmien zlyhal');
+                if (String(item.id).startsWith('def-')) {
+                    const newDocRef = doc(collection(db, 'gallery'));
+                    batch.set(newDocRef, {
+                        s3_key: item.s3_key || '',
+                        imageUrl: item.imageUrl || (STORAGE_BASE + item.s3_key),
+                        alt_text: item.alt_text || '',
+                        category: item.category || 'hlina',
+                        sort_order: sortOrder,
+                        is_active: true,
+                        created_at: new Date().toISOString()
+                    });
+                } else {
+                    const docRef = doc(db, 'gallery', String(item.id));
+                    batch.update(docRef, {
+                        alt_text: item.alt_text || '',
+                        sort_order: sortOrder
+                    });
+                }
+            }
+            await batch.commit();
             location.reload();
         } catch (err) {
             console.error(err);
@@ -230,39 +225,24 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       for (const file of files) {
           status.innerText = `Nahrávam ${completed + 1} z ${files.length}: ${file.name}...`;
           try {
-              const headers = await getHeaders();
-              
-              // 1. Získanie podpísanej adresy z Cloud Function
-              const signRes = await fetch(`${API_BASE}/get-upload-url`, {
-                  method: 'POST',
-                  headers,
-                  body: JSON.stringify({ fileName: file.name, contentType: file.type, folder: 'gallery' })
-              });
-              if (!signRes.ok) throw new Error(`Nepodarilo sa získať podpis pre ${file.name}`);
-              const signData = await signRes.json();
+              const sanitizedName = file.name.replace(/[^a-z0-9.-]/gi, '_');
+              const fileKey = `gallery/${Date.now()}-${sanitizedName}`;
+              const fileStorageRef = ref(storage, fileKey);
 
-              // 2. Samotné nahranie súboru priamo na Google Cloud Storage
-              const uploadRes = await fetch(signData.uploadUrl, { 
-                  method: 'PUT', 
-                  body: file, 
-                  headers: { 'Content-Type': file.type } 
-              });
-              if (!uploadRes.ok) throw new Error(`Upload na GCS zlyhal pre ${file.name}`);
+              await uploadBytes(fileStorageRef, file);
+              const downloadUrl = await getDownloadURL(fileStorageRef);
 
-              // 3. Uloženie záznamu do databázy PostgreSQL
-              const dbRes = await fetch(`${API_BASE}/gallery`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                  s3_key: signData.key,
-                  alt_text: alt,
+              await addDoc(collection(db, 'gallery'), {
+                  imageUrl: downloadUrl,
+                  s3_key: fileKey,
+                  alt_text: alt || '',
                   category: category,
                   mime_type: file.type,
                   file_size: file.size,
-                  sort_order: -Math.floor(Date.now() / 1000) + completed
-                })
+                  sort_order: -Math.floor(Date.now() / 1000) + completed,
+                  is_active: true,
+                  created_at: new Date().toISOString()
               });
-              if (!dbRes.ok) throw new Error(`Uloženie do databázy zlyhalo pre ${file.name}`);
 
               completed++;
           } catch (err) {
@@ -282,19 +262,34 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
 
   async function loadGallery() {
     try {
-      const res = await fetch(`${API_BASE}/gallery`);
-      if (!res.ok) throw new Error('Nepodarilo sa stiahnuť položky galérie.');
-      const photos = await res.json();
+      const q = query(collection(db, 'gallery'), orderBy('sort_order', 'asc'));
+      const querySnapshot = await getDocs(q);
 
-      photos.forEach((photo, index) => {
-        photo.requested_sort = index + 1;
-      });
-      galleryList = photos;
-      currentPage = 1;
-      renderGallery();
+      if (querySnapshot.empty) {
+        galleryList = DEFAULT_GALLERY.map(item => ({ ...item, requested_sort: item.sort_order }));
+      } else {
+        const photos = [];
+        querySnapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.is_active !== false) {
+            photos.push({
+              id: docSnap.id,
+              ...data
+            });
+          }
+        });
+        photos.forEach((photo, index) => {
+          photo.requested_sort = index + 1;
+        });
+        galleryList = photos;
+      }
     } catch (err) {
-      console.error('Chyba načítania galérie:', err);
+      console.warn('Používam predvolené fotky galérie:', err);
+      galleryList = DEFAULT_GALLERY.map(item => ({ ...item, requested_sort: item.sort_order }));
     }
+
+    currentPage = 1;
+    renderGallery();
   }
 
   function renderGallery() {
@@ -312,7 +307,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
 
     pageItems.forEach((photo) => {
         const overallIndex = galleryList.indexOf(photo);
-        const fullUrl = STORAGE_BASE + photo.s3_key;
+        const fullUrl = photo.imageUrl || (STORAGE_BASE + photo.s3_key);
         const col = document.createElement('div');
         col.className = 'col-lg-4 col-md-6 portfolio-item isotope-item gallery-item-wrap';
         col.dataset.id = photo.id;
@@ -336,7 +331,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
                     </div>
                 </div>
                 <div style="text-align: right;">
-                    <button class="admin-del-btn" data-id="${photo.id}" data-key="${photo.s3_key}" 
+                    <button class="admin-del-btn" data-id="${photo.id}" data-key="${photo.s3_key || ''}" 
                             style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">
                         Zmazať
                     </button>
@@ -363,7 +358,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     setupDeleteButtons();
     renderPaginationControls(totalPages);
 
-    // Re-initialize Isotope & GLightbox
     if (window.Isotope && window.imagesLoaded) {
       imagesLoaded(container, function () {
         const iso = new Isotope(container, {
@@ -395,14 +389,19 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
             if (!confirm('Naozaj zmazať túto fotku?')) return;
             btn.disabled = true;
             btn.innerText = 'Mažem...';
+            const id = btn.dataset.id;
+            const key = btn.dataset.key;
             try {
-                const headers = await getHeaders();
-                const delRes = await fetch(`${API_BASE}/gallery`, {
-                  method: 'DELETE',
-                  headers,
-                  body: JSON.stringify({ id: btn.dataset.id, s3Key: btn.dataset.key })
-                });
-                if (!delRes.ok) throw new Error('Vymazanie na API zlyhalo.');
+                if (!String(id).startsWith('def-')) {
+                    await deleteDoc(doc(db, 'gallery', String(id)));
+                }
+                if (key && !key.startsWith('gallery/17805039') && !key.startsWith('gallery/17806572')) {
+                    try {
+                        await deleteObject(ref(storage, key));
+                    } catch (storageErr) {
+                        console.warn('Storage delete warn:', storageErr);
+                    }
+                }
                 location.reload();
             } catch (err) {
                 console.error(err);
@@ -438,7 +437,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       }
     }
 
-    // Prev Button
     const prevBtn = document.createElement('button');
     prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i>';
     prevBtn.disabled = currentPage === 1;
@@ -453,7 +451,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     }
     paginationDiv.appendChild(prevBtn);
 
-    // Page numbers
     for (let i = 1; i <= totalPages; i++) {
       const pageBtn = document.createElement('button');
       pageBtn.innerText = i;
@@ -477,7 +474,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       paginationDiv.appendChild(pageBtn);
     }
 
-    // Next Button
     const nextBtn = document.createElement('button');
     nextBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
     nextBtn.disabled = currentPage === totalPages;

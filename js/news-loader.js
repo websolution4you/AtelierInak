@@ -1,5 +1,22 @@
-import { auth, API_BASE } from './gcp-client.js';
+import { auth, db, storage } from './firebase-config.js?v=2.2';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  orderBy, 
+  writeBatch 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 (function () {
   const STORAGE_BASE = 'https://storage.googleapis.com/atelierinak/';
@@ -8,59 +25,39 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
   
   if (!container) return;
 
+  const DEFAULT_NEWS = [
+    {
+      id: 'def-news-1',
+      title: 'Aktuálne z ateliéru',
+      description: 'Vitajte v Ateliéri INAK! Ponúkame priestor pre senzoriku, emócie, osobný rozvoj a cestu k sebe cez tvorbu. Sledujte naše aktivity a workshopy.',
+      s3_key: 'news/1784036184082-20260713_135441.jpg',
+      created_at: '2026-07-14T13:36:25.180Z',
+      sort_order: 1
+    }
+  ];
+
   let newsList = [];
   let currentPage = 1;
   let adminMode = false;
-
-  // Track if view is mobile or desktop to detect shifts
   let isMobile = window.innerWidth <= 768;
 
-  // Pomocná funkcia na získanie autorizačných hlavičiek s čerstvým Firebase tokenom
-  async function getHeaders(isJson = true) {
-    const user = auth.currentUser;
-    if (!user) return {};
-    const token = await user.getIdToken();
-    const headers = { 'Authorization': `Bearer ${token}` };
-    if (isJson) {
-      headers['Content-Type'] = 'application/json';
-    }
-    return headers;
-  }
-
   async function init() {
-    // Sledujeme stav prihlásenia
     onAuthStateChanged(auth, async (user) => {
-      let isAdmin = false;
-
-      if (user) {
-        try {
-          const headers = await getHeaders();
-          const checkRes = await fetch(`${API_BASE}/check-admin`, { headers });
-          if (checkRes.ok) {
-            const data = await checkRes.json();
-            isAdmin = data.is_admin || false;
-          }
-        } catch (err) {
-          console.error("Chyba overenia roly admina:", err);
-        }
-      }
-
-      adminMode = isAdmin;
+      adminMode = !!user;
 
       if (adminMode) {
         setupAdminUI();
       }
 
-      loadNews();
+      await loadNews();
       setupModalReader();
       setupInputListeners();
 
-      // Listen to resize events and trigger layout adjustments on breakpoint cross
       window.addEventListener('resize', () => {
         const currentMobile = window.innerWidth <= 768;
         if (currentMobile !== isMobile) {
           isMobile = currentMobile;
-          currentPage = 1; // reset page on layout transition
+          currentPage = 1;
           renderNews();
         }
       });
@@ -68,7 +65,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
   }
 
   function setupInputListeners() {
-    // Keep internal newsList up-to-date when admin inputs changes
     container.addEventListener('input', (e) => {
       const itemEl = e.target.closest('.news-item-wrap');
       if (!itemEl) return;
@@ -83,7 +79,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       }
     });
 
-    // Commit sort order and swap on change (blur or Enter)
     container.addEventListener('change', (e) => {
       if (e.target.classList.contains('admin-news-sort-edit')) {
         const itemEl = e.target.closest('.news-item-wrap');
@@ -97,20 +92,17 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         const oldSort = item.requested_sort;
         if (oldSort === newSort) return;
 
-        // Find if another item has newSort
         const otherItem = newsList.find(n => n.id != id && n.requested_sort === newSort);
         if (otherItem) {
           otherItem.requested_sort = oldSort;
         }
         item.requested_sort = newSort;
 
-        // Sort and re-render
         newsList.sort((a, b) => a.requested_sort - b.requested_sort);
         renderNews();
       }
     });
 
-    // Blur on Enter keypress to trigger change event
     container.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.classList.contains('admin-news-sort-edit')) {
         e.preventDefault();
@@ -167,10 +159,10 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         } else {
             uploadBtn.style.display = 'none';
         }
-    }
+    };
 
     document.getElementById('admin-news-logout-btn').onclick = async () => {
-        if(confirm('Naozaj sa chcete odhlásiť?')) {
+        if (confirm('Naozaj sa chcete odhlásiť?')) {
             await signOut(auth);
             location.reload();
         }
@@ -181,27 +173,33 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         btn.disabled = true;
         btn.innerText = 'Ukladám...';
         
-        let updates = newsList.map(item => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            requested_sort: parseFloat(item.requested_sort) || 999
-        }));
-        
-        updates.sort((a, b) => a.requested_sort - b.requested_sort);
-        for (let i = 0; i < updates.length; i++) {
-            updates[i].sort_order = i;
-        }
-
         try {
-            const headers = await getHeaders();
-            const res = await fetch(`${API_BASE}/news/batch`, {
-              method: 'PUT',
-              headers,
-              body: JSON.stringify({ updates })
-            });
+            const batch = writeBatch(db);
+            for (let i = 0; i < newsList.length; i++) {
+                const item = newsList[i];
+                const sortOrder = i;
 
-            if (!res.ok) throw new Error('Hromadná úprava noviniek zlyhala');
+                if (String(item.id).startsWith('def-')) {
+                    const newDocRef = doc(collection(db, 'news'));
+                    batch.set(newDocRef, {
+                        title: item.title || '',
+                        description: item.description || '',
+                        s3_key: item.s3_key || '',
+                        imageUrl: item.imageUrl || (STORAGE_BASE + item.s3_key),
+                        sort_order: sortOrder,
+                        is_active: true,
+                        created_at: item.created_at || new Date().toISOString()
+                    });
+                } else {
+                    const docRef = doc(db, 'news', String(item.id));
+                    batch.update(docRef, {
+                        title: item.title || '',
+                        description: item.description || '',
+                        sort_order: sortOrder
+                    });
+                }
+            }
+            await batch.commit();
             location.reload();
         } catch (err) {
             console.error(err);
@@ -224,39 +222,24 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       status.innerText = `Nahrávam: ${file.name}...`;
 
       try {
-          const headers = await getHeaders();
+          const sanitizedName = file.name.replace(/[^a-z0-9.-]/gi, '_');
+          const fileKey = `news/${Date.now()}-${sanitizedName}`;
+          const fileStorageRef = ref(storage, fileKey);
 
-          // 1. Získanie signed URL pre nahrávanie
-          const signRes = await fetch(`${API_BASE}/get-upload-url`, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({ fileName: file.name, contentType: file.type, folder: 'news' })
-          });
-          if (!signRes.ok) throw new Error('Nepodarilo sa získať link na nahranie');
-          const signData = await signRes.json();
+          await uploadBytes(fileStorageRef, file);
+          const downloadUrl = await getDownloadURL(fileStorageRef);
 
-          // 2. Nahrávanie priamo do Google Cloud Storage
-          const uploadRes = await fetch(signData.uploadUrl, { 
-              method: 'PUT', 
-              body: file, 
-              headers: { 'Content-Type': file.type } 
+          await addDoc(collection(db, 'news'), {
+              title: title,
+              description: desc,
+              imageUrl: downloadUrl,
+              s3_key: fileKey,
+              mime_type: file.type,
+              file_size: file.size,
+              sort_order: -Math.floor(Date.now() / 1000),
+              is_active: true,
+              created_at: new Date().toISOString()
           });
-          if (!uploadRes.ok) throw new Error('Nahranie plagátu na GCS zlyhalo');
-
-          // 3. Zápis informácií do PostgreSQL databázy
-          const dbRes = await fetch(`${API_BASE}/news`, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({
-                  s3_key: signData.key, 
-                  title: title,
-                  description: desc,
-                  mime_type: file.type, 
-                  file_size: file.size, 
-                  sort_order: -Math.floor(Date.now() / 1000)
-              })
-          });
-          if (!dbRes.ok) throw new Error('Zápis do databázy zlyhal');
 
           status.style.color = 'green';
           status.innerText = `Príspevok úspešne pridaný!`;
@@ -272,19 +255,34 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
 
   async function loadNews() {
     try {
-      const res = await fetch(`${API_BASE}/news`);
-      if (!res.ok) throw new Error('Nepodarilo sa načítať novinky');
-      const news = await res.json();
+      const q = query(collection(db, 'news'), orderBy('sort_order', 'asc'));
+      const querySnapshot = await getDocs(q);
 
-      news.forEach((item, index) => {
-        item.requested_sort = index + 1;
-      });
-      newsList = news;
-      currentPage = 1;
-      renderNews();
+      if (querySnapshot.empty) {
+        newsList = DEFAULT_NEWS.map(item => ({ ...item, requested_sort: item.sort_order }));
+      } else {
+        const news = [];
+        querySnapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.is_active !== false) {
+            news.push({
+              id: docSnap.id,
+              ...data
+            });
+          }
+        });
+        news.forEach((item, index) => {
+          item.requested_sort = index + 1;
+        });
+        newsList = news;
+      }
     } catch (err) {
-      console.error("Error loading news:", err);
+      console.warn('Používam predvolené novinky:', err);
+      newsList = DEFAULT_NEWS.map(item => ({ ...item, requested_sort: item.sort_order }));
     }
+
+    currentPage = 1;
+    renderNews();
   }
 
   function renderNews() {
@@ -302,7 +300,7 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
 
     pageItems.forEach((item) => {
         const overallIndex = newsList.indexOf(item);
-        const fullUrl = STORAGE_BASE + item.s3_key;
+        const fullUrl = item.imageUrl || (STORAGE_BASE + item.s3_key);
         const dateStr = new Date(item.created_at).toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' });
         
         const col = document.createElement('div');
@@ -330,13 +328,12 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
                     </div>
                 </div>
                 <div style="text-align: right;">
-                    <button class="admin-news-del-btn" data-id="${item.id}" data-key="${item.s3_key}" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">Zmazať príspevok</button>
+                    <button class="admin-news-del-btn" data-id="${item.id}" data-key="${item.s3_key || ''}" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">Zmazať príspevok</button>
                 </div>
             </div>
             `;
         }
 
-        // Vytvorenie skráteného textu pre kartu (napr. 130 znakov)
         const limit = 130;
         let shortText = item.description || '';
         if (shortText.length > limit) {
@@ -373,14 +370,19 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
             if (!confirm('Naozaj zmazať tento príspevok?')) return;
             btn.disabled = true;
             btn.innerText = 'Mažem...';
+            const id = btn.dataset.id;
+            const key = btn.dataset.key;
             try {
-                const headers = await getHeaders();
-                const delRes = await fetch(`${API_BASE}/news`, {
-                  method: 'DELETE',
-                  headers,
-                  body: JSON.stringify({ id: btn.dataset.id, s3Key: btn.dataset.key })
-                });
-                if (!delRes.ok) throw new Error('Vymazanie príspevku zlyhalo.');
+                if (!String(id).startsWith('def-')) {
+                    await deleteDoc(doc(db, 'news', String(id)));
+                }
+                if (key && !key.startsWith('news/1784036184082')) {
+                    try {
+                        await deleteObject(ref(storage, key));
+                    } catch (storageErr) {
+                        console.warn('Storage warn:', storageErr);
+                    }
+                }
                 location.reload();
             } catch (err) {
                 console.error(err);
@@ -413,7 +415,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       }
     }
 
-    // Prev Button
     const prevBtn = document.createElement('button');
     prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i>';
     prevBtn.disabled = currentPage === 1;
@@ -428,7 +429,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
     }
     paginationDiv.appendChild(prevBtn);
 
-    // Page numbers
     for (let i = 1; i <= totalPages; i++) {
       const pageBtn = document.createElement('button');
       pageBtn.innerText = i;
@@ -452,7 +452,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       paginationDiv.appendChild(pageBtn);
     }
 
-    // Next Button
     const nextBtn = document.createElement('button');
     nextBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
     nextBtn.disabled = currentPage === totalPages;
@@ -469,7 +468,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
   }
 
   function setupModalReader() {
-    // Spracovanie kliknutia na "Zistiť viac" na otvorenie modálu s plným článkom
     document.addEventListener('click', function (e) {
       const readmore = e.target.closest('.news-item .readmore');
       if (!readmore) return;
@@ -481,7 +479,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
       const date = itemWrap.querySelector('.date').innerText;
       const fullContent = decodeURIComponent(readmore.getAttribute('data-full-content') || '');
 
-      // Nájdeme prvky v modáli
       const modalTitle = document.getElementById('modalNewsTitle');
       const modalImg = document.getElementById('modalNewsImg');
       const modalDate = document.getElementById('modalNewsDate');
@@ -493,7 +490,6 @@ import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/
         modalDate.innerText = date;
         modalContent.textContent = fullContent;
 
-        // Otvoríme modal (pomocou Bootstrap 5 JS API)
         if (window.bootstrap && window.bootstrap.Modal) {
           const modalEl = document.getElementById('newsModal');
           let modalInstance = bootstrap.Modal.getInstance(modalEl);
