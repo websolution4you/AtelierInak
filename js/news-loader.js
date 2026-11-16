@@ -1,4 +1,4 @@
-import { auth, db, storage } from './firebase-config.js?v=2.2';
+import { auth, db } from './firebase-config.js?v=2.3';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { 
   collection, 
@@ -11,12 +11,38 @@ import {
   orderBy, 
   writeBatch 
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  deleteObject 
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+function compressImageToDataUrl(file, maxWidth = 1200, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxWidth) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxWidth) / height);
+            height = maxWidth;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('Nepodarilo sa načítať obrázok na kompresiu.'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Nepodarilo sa prečítať súbor.'));
+    reader.readAsDataURL(file);
+  });
+}
 
 (function () {
   const STORAGE_BASE = 'https://storage.googleapis.com/atelierinak/';
@@ -222,20 +248,15 @@ import {
       status.innerText = `Nahrávam: ${file.name}...`;
 
       try {
-          const sanitizedName = file.name.replace(/[^a-z0-9.-]/gi, '_');
-          const fileKey = `news/${Date.now()}-${sanitizedName}`;
-          const fileStorageRef = ref(storage, fileKey);
-
-          await uploadBytes(fileStorageRef, file);
-          const downloadUrl = await getDownloadURL(fileStorageRef);
+          const downloadUrl = await compressImageToDataUrl(file);
 
           await addDoc(collection(db, 'news'), {
               title: title,
               description: desc,
               imageUrl: downloadUrl,
-              s3_key: fileKey,
-              mime_type: file.type,
-              file_size: file.size,
+              s3_key: '',
+              mime_type: 'image/jpeg',
+              file_size: downloadUrl.length,
               sort_order: -Math.floor(Date.now() / 1000),
               is_active: true,
               created_at: new Date().toISOString()

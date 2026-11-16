@@ -2,19 +2,9 @@
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
-// 1. Auth konfigurácia - pôvodný projekt s existujúcim účtom klienta ako [DEFAULT] aplikácia
-const authConfig = {
-  apiKey: "AIzaSyDb04anqAtvSX0cyR1Vj2whBWdOVnftjWM",
-  authDomain: "project-800f9b01-ef95-4b9e-853.firebaseapp.com",
-  projectId: "project-800f9b01-ef95-4b9e-853",
-  storageBucket: "project-800f9b01-ef95-4b9e-853.firebasestorage.app",
-  messagingSenderId: "652999054235"
-};
-
-// 2. Databáza Firestore a Storage - bezplatný projekt AtelierInak
-const dbConfig = {
+// Konfigurácia projektu AtelierInak (Auth + Firestore na bezplatnom Spark pláne)
+const firebaseConfig = {
   apiKey: "AIzaSyC3UENytEXoSa-rnEVdXcv8PajTNM5hh2Y",
   authDomain: "atelierinak.firebaseapp.com",
   projectId: "atelierinak",
@@ -22,11 +12,8 @@ const dbConfig = {
   messagingSenderId: "1067081841089"
 };
 
-// Inicializácia: Auth na [DEFAULT] app kvôli 100% spoľahlivej IndexedDB persistencii
-const allApps = getApps();
-const authApp = allApps.length === 0 ? initializeApp(authConfig) : getApp();
-const dbApp = allApps.some(a => a.name === "atelierinak") ? getApp("atelierinak") : initializeApp(dbConfig, "atelierinak");
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-export const auth = getAuth(authApp);
-export const db = getFirestore(dbApp);
-export const storage = getStorage(dbApp);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = null;
