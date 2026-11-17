@@ -66,6 +66,26 @@ function compressImageToDataUrl(file, maxWidth = 1200, quality = 0.8) {
   let currentPage = 1;
   let adminMode = false;
   let isMobile = window.innerWidth <= 768;
+  let glightboxInstance = null;
+
+  function toDisplayUrl(url) {
+    if (!url || !url.startsWith('data:image/')) return url;
+    try {
+      const parts = url.split(',');
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      return URL.createObjectURL(blob);
+    } catch (e) {
+      return url;
+    }
+  }
 
   async function init() {
     onAuthStateChanged(auth, async (user) => {
@@ -328,7 +348,8 @@ function compressImageToDataUrl(file, maxWidth = 1200, quality = 0.8) {
 
     pageItems.forEach((photo) => {
         const overallIndex = galleryList.indexOf(photo);
-        const fullUrl = photo.imageUrl || (STORAGE_BASE + photo.s3_key);
+        const rawUrl = photo.imageUrl || (STORAGE_BASE + photo.s3_key);
+        const fullUrl = toDisplayUrl(rawUrl);
         const col = document.createElement('div');
         col.className = 'col-lg-4 col-md-6 portfolio-item isotope-item gallery-item-wrap';
         col.dataset.id = photo.id;
@@ -367,7 +388,7 @@ function compressImageToDataUrl(file, maxWidth = 1200, quality = 0.8) {
                 <img src="${fullUrl}" class="img-fluid" alt="${photo.alt_text || ''}">
                 <div class="portfolio-info">
                   <p>${photo.alt_text || ''}</p>
-                  <a href="${fullUrl}" title="${photo.alt_text || ''}" data-gallery="portfolio-gallery-all"
+                  <a href="${fullUrl}" title="${photo.alt_text || ''}" data-gallery="portfolio-gallery-all" data-type="image"
                     class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
                 </div>
               </div>
@@ -397,7 +418,10 @@ function compressImageToDataUrl(file, maxWidth = 1200, quality = 0.8) {
     }
 
     if (window.GLightbox) {
-      GLightbox({
+      if (glightboxInstance && typeof glightboxInstance.destroy === 'function') {
+        glightboxInstance.destroy();
+      }
+      glightboxInstance = GLightbox({
         selector: '.glightbox'
       });
     }
